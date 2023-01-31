@@ -1,19 +1,97 @@
 IDEAL
-MODEL medium
+MODEL small
 STACK 100h
 DATASEG
 Factors dw 16 dup (0)
+first_primes dw 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97 ;25 primes under 100
 seed db 0
 a dw 0
 b dw 0
 p dw 0
 emod_r dd 0
+prime_text db 'nice! this is a prime!',10,13,'$'
+not_prime_text db 'oh.. this is not  a prime. you will get it next time',10,13,'$'
 CODESEG
 proc user_input
 endp user_input
 
 
 proc prime_test ;use Fermat's Litlle Therorem to decide if a given number in range(2-2**16-1) is prime
+	;assume the number is in the stack
+	push bp
+	mov bp,sp
+	push ax
+	push bx
+	push cx
+	push dx
+	mov ax,[bp+4] ;ax=number
+	xor cl,cl
+	cmp ax,100
+	ja test1
+	mov si,offset first_primes
+	check_first_prime:
+	cmp ax,[si]
+	je PRIME
+	inc si
+	inc si
+	inc cl
+	cmp cx,25
+	jne check_first_prime
+	jmp NOT_PRIME
+	test1:
+	call random_seed;we randomized our seed
+	xor cl,cl
+	mov bx,ax
+	dec bx
+	check_prime:
+	call random
+	push dx
+	mov dl,[seed]
+	xor dh,dh
+	cmp dx,bx;we want seed<=ax-1
+	pop dx
+	ja check_prime
+	mov dl,[seed]
+	xor dh,dh
+	push dx
+	push ax
+	push ax
+	call emod ;emod_r=seed*n mod n
+	mov dx,[word ptr emod_r]
+	push bx
+	xor bx,bx
+	mov bl,[seed]
+	cmp dx,bx
+	pop bx
+	jne NOT_PRIME
+	inc cl
+	cmp cl,10
+	jne check_prime
+	jmp prime
+	
+	
+	
+	PRIME:
+	mov dx,offset prime_text
+	mov ah,9h
+	int 21h
+	jmp prime1
+	
+	
+	
+	NOT_PRIME:
+	mov dx,offset not_prime_text
+	mov ah,9h
+	int 21h
+	
+	prime1:
+	pop dx
+	pop cx
+	pop bx
+	pop ax
+	pop bp
+	ret 2
+	
 endp prime_test
 
 
@@ -26,11 +104,11 @@ proc emod ;compute a**b mod p
 	push cx
 	push dx
 	
-	mov ax,[bp+10]
-	mov [a],ax
 	mov ax,[bp+8]
-	mov [b],ax     
+	mov [a],ax
 	mov ax,[bp+6]
+	mov [b],ax     
+	mov ax,[bp+4]
 	mov [p],ax ;a=a b=b p=p
 	
 	cmp [b],0
@@ -176,6 +254,9 @@ proc random  ;gets a seed and generats a random number and also changes the seed
 	push ax
 	push bx
 	push dx
+	xor ax,ax
+	xor bx,bx
+	xor dx,dx
 	mov al,[seed]
 	mov bl,7
 	mul bl
@@ -279,10 +360,8 @@ start:
 	mov ds,ax
 	
 	
-	push 251
-	push 7369
-	push 7369
-	call emod
+	push 23
+	call prime_test
 	
 
 

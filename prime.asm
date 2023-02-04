@@ -185,6 +185,7 @@ endp guide_screen
 
 proc test_screen
 	
+	
 	call start_text_mode
 	
 	push offset mid
@@ -443,7 +444,7 @@ proc random_seed ;seed=the time(secondes)%30, if (time(secondes)%30)%4==0 then w
 	mov bl,30
 	div bl     ;al=ax div 30        ah= ax mod 30
 	mov al,ah
-	xor ah,ah
+	xor ah,ah                   
 	mov cl,al
 	mov bl,4
 	div bl    ;al=ax div 4           ah=ax mod 4
@@ -495,10 +496,10 @@ proc divisors_check ;find the divisors of a given number and store them in a giv
 	mov ax,[bp+4] ; ax=number
 	
 	xor cx,cx
-	mov cl,2
+	mov cx,2
 	xor dx,dx
 	L1: ;cl goes through every number up to sqrt(given number) and checks divisibility
-		
+		xor dx,dx
 		div cx      ;ax= ax/cx   dx=dx:ax mod cx ->dx=0 ,dx=mod -> if dx=0 then the the cx divide the number
 		cmp dx,0
 		jne check
@@ -512,7 +513,7 @@ proc divisors_check ;find the divisors of a given number and store them in a giv
 	cmp ax,1
 	je finish
 	xor dx,dx
-	inc cl
+	inc cx
 	jmp L1
 	finish:
 	pop si
@@ -591,11 +592,30 @@ proc prime_screen
 endp prime_screen
 
 proc not_prime_screen
-
+	
+	
+	xor cl,cl
+	mov si,offset Factors
+	L0_Factor:
+	mov [si],0
+	inc cl
+	add si,2
+	cmp cl,16
+	jne L0_Factor          ;make factors 00000000000
+	
+	mov [digits],0
+	mov [digits+1],0
+	mov [digits+2],0
+	mov [digits+3],0
+	mov [digits+4],0
+	
+	
+	
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 	push offset Factors
 	push [test_num]
-	call divisors_check;Factors=factors of the number we already test
+	call divisors_check ;Factors=factors of the number we already test
 	
 	call start_text_mode
 	
@@ -737,7 +757,7 @@ proc not_prime_screen
 	mov dl,dh
 	mov ah,2
 	int 21h
-	jmp reg_check0
+	jmp reg_check1
 	
 	done_print_Factor_mid:
 	jmp done_print_Factor
@@ -752,7 +772,7 @@ proc not_prime_screen
 	mov dl,dh
 	mov ah,2
 	int 21h
-	jmp reg_check1
+	jmp reg_check2
 	
 	dig3:
 	cmp [digits+2],0
@@ -763,7 +783,7 @@ proc not_prime_screen
 	mov dl,dh
 	mov ah,2
 	int 21h
-	jmp reg_check2
+	jmp reg_check3
 	
 	L_Factor_mid:
 	jmp L_Factor
@@ -777,6 +797,7 @@ proc not_prime_screen
 	mov dl,dh
 	mov ah,2
 	int 21h
+	jmp reg_check4
 	
 	dig5:
 	mov dh,[digits+4]
@@ -814,6 +835,7 @@ proc not_prime_screen
 	mov ah,2
 	int 21h
 	
+	reg_check3:
 	
 	mov dh,[digits+3]
 	add dh,30h
@@ -821,6 +843,7 @@ proc not_prime_screen
 	mov ah,2
 	int 21h
 	
+	reg_check4:
 	
 	mov dh,[digits+4]
 	add dh,30h
@@ -958,6 +981,10 @@ start:
 	
 	exit_mid:
 	jmp exit
+;stop11
+	stop11:
+	start_main_loop_stop11:
+	jmp start_main_loop
 ;test loop
 	test_loop_start:
 	call test_screen
@@ -988,9 +1015,6 @@ start:
 	jmp rewrite
 	
 	
-	start_main_loop_mid2:
-	jmp start_main_loop_mid1
-	
 	n1:
 	
 	cmp cl,1
@@ -1000,7 +1024,15 @@ start:
 	mov [digit2],al
 	jmp rewrite
 	
-	test_loop_start_mid:
+;stop10
+	stop10:
+	
+	test_loop_Start_stop10:
+	jmp test_loop_Start
+	
+	start_main_loop_stop10:
+	jmp start_main_loop_stop11
+	
 	jmp test_loop_start
 	
 	n2:
@@ -1044,9 +1076,16 @@ start:
 	jne digitL
 	
 	rewrite:
+	jmp test_loop_Start_stop10
+;stop9
+	stop9:
 	
-	jmp test_loop_start
+	test_loop_Start_stop9:
+	jmp test_loop_Start_stop10
 	
+	start_main_loop_stop9:
+	jmp start_main_loop_stop10
+		
 	check_delete_enter:
 	cmp [key],8h
 	jne check_enter
@@ -1061,10 +1100,8 @@ start:
 	cmp [digit5],'-'
 	je search1
 	mov [digit5],'-'
-	jmp test_loop_start
+	jmp test_loop_Start_stop9
 	
-	test_loop_start_mid2:
-	jmp test_loop_start_mid
 	d4:
 	
 	cmp cl,4
@@ -1073,7 +1110,7 @@ start:
 	cmp [digit4],'-'
 	je search1
 	mov [digit4],'-'
-	jmp test_loop_start
+	jmp test_loop_Start_stop9
 	
 	
 	
@@ -1085,8 +1122,16 @@ start:
 	cmp [digit3],'-'
 	je search1
 	mov [digit3],'-'
-	jmp test_loop_start
+	jmp test_loop_Start_stop9
 	
+;stop8
+	stop8:
+	
+	test_loop_Start_stop8:
+	jmp test_loop_Start_stop9
+	
+	start_main_loop_stop8:
+	jmp start_main_loop_stop9
 	
 	
 	d2:
@@ -1097,15 +1142,13 @@ start:
 	cmp [digit2],'-'
 	je search1
 	mov [digit2],'-'
-	jmp test_loop_start
-	
-	
+	jmp test_loop_Start_stop8
 	
 	d1:
 	cmp [digit1],'-'
 	je search1
 	mov [digit1],'-'
-	jmp test_loop_start
+	jmp test_loop_Start_stop8
 	
 	
 	search1:
@@ -1113,25 +1156,135 @@ start:
 	cmp cl,0
 	jne digitL5
 	
-	jmp test_loop_start
-	
-	
+	jmp test_loop_Start_stop8
 	
 	check_enter:
 	
-	cmp [key],13
-	jne test_loop_start_mid2
 	
+	cmp [key],13
+	jne test_loop_Start_stop8
+	
+	xor cx,cx 
+	xor bx,bx
+	
+	mov bl,[digit1]
+	push bx
+	call is_digit
+	add cx,ax
+;stop7
+	jmp stop7_end
+	stop7:
+	
+	test_loop_Start_stop7:
+	jmp test_loop_Start_stop8
+	
+	start_main_loop_stop7:
+	jmp start_main_loop_stop8
+	
+	stop7_end:
+	
+	mov bl,[digit2]
+	push bx
+	call is_digit
+	add cx,ax
+	
+	mov bl,[digit3]
+	push bx
+	call is_digit
+	add cx,ax
+	
+	mov bl,[digit4]
+	push bx
+	call is_digit
+	add cx,ax
+	
+	mov bl,[digit5]
+	push bx
+	call is_digit
+	add cx,ax
+	
+	cmp cx,5
+	jne test_loop_Start_stop7
+	
+	jmp stop6_end
+;stop 6
+	stop6:
+	
+	test_loop_Start_stop6:
+	jmp test_loop_Start_stop7
+	
+	start_main_loop_stop6:
+	jmp start_main_loop_stop7
+	
+	stop6_end:
+	
+	mov bl,[digit1]
+	sub bl,30h
+	cmp bl,6
+	jb test_now
+	cmp bl,6
+	ja test_loop_Start_stop6
+	
+	
+	mov bl,[digit2]
+	sub bl,30h
+	cmp bl,5
+	jb test_now
+	cmp bl,5
+	ja test_loop_Start_stop6
+	
+	
+	mov bl,[digit3]
+	sub bl,30h
+	cmp bl,5
+	jb test_now
+	cmp bl,5
+	ja test_loop_Start_stop6
+	
+	
+	mov bl,[digit4]
+	sub bl,30h
+	cmp bl,3
+	jb test_now
+	cmp bl,3
+	ja test_loop_Start_stop6
+	
+	
+	mov bl,[digit1]
+	sub bl,30h
+	cmp bl,5
+	jb test_now
+	cmp bl,5
+	ja test_loop_Start_stop6
+	jmp stop5_end
+	
+;stop5
+	stop5:
+	test_loop_Start_stop5:
+	jmp test_loop_Start_stop6
+	
+	start_main_loop_stop5:
+	jmp start_main_loop_stop6
+	
+	
+	stop5_end:
+	
+	test_now:
+	mov [test_num],0
+	
+	xor ax,ax
 	mov al,[digit5]
 	sub al,30h
 	add [test_num],ax ;num+=digit5
 	
+	xor ax,ax
 	mov al,[digit4]
 	sub al,30h
 	mov bl,10
 	mul bl ;ax=10*digit4
 	add [test_num],ax ;num+=10*digit4
 	
+	xor ax,ax
 	mov al,[digit3]
 	sub al,30h
 	mov bl,100
@@ -1139,39 +1292,61 @@ start:
 	add [test_num],ax ;num+=100*digit3
 	
 	jmp solve
+;stop4
+	stop4:
 	
-	start_main_loop_mid3:
-	jmp start_main_loop_mid2
+	test_loop_Start_stop4:
+	jmp test_loop_Start_stop5
+	
+	start_main_loop_stop4:
+	jmp start_main_loop_stop5
+	
 	
 	solve:
+	xor ax,ax
 	mov al,[digit2]
 	sub al,30h
-	mov bl,255
+	mov bl,250
 	mul bl ;ax=1000*digit2
 	add [test_num],ax ;num+=1000*digit2
 	
+	xor ax,ax
 	mov al,[digit2]
 	sub al,30h
-	mov bl,255
+	mov bl,250
 	mul bl ;ax=1000*digit2
 	add [test_num],ax ;num+=1000*digit2
 	
+	jmp stop3_end
+;stop3
+	stop3:
+	test_loop_Start_stop3:
+	jmp test_loop_Start_stop4
+	
+	start_main_loop_stop3:
+	jmp start_main_loop_stop4
+	
+	stop3_end:
+	
+	
+	xor ax,ax
 	mov al,[digit2]
 	sub al,30h
-	mov bl,255
+	mov bl,250
 	mul bl ;ax=1000*digit2
 	add [test_num],ax ;num+=1000*digit2
 	
+	xor ax,ax
 	mov al,[digit2]
 	sub al,30h
-	mov bl,255
+	mov bl,250
 	mul bl ;ax=1000*digit2
 	add [test_num],ax ;num+=1000*digit2
-	
 	
 	mov cl,0
 	L100:
 	inc cl
+	xor ax,ax
 	mov al,[digit1]
 	sub al,30h
 	mov bl,100
@@ -1181,7 +1356,17 @@ start:
 	cmp cl,100
 	jne L100
 	
+	jmp stop2_end
+;stop2
+	stop2:
+	test_loop_start_stop2:
+	jmp test_loop_Start_stop3
 	
+	start_main_loop_stop2:
+	jmp start_main_loop_stop3
+	
+	stop2_end:
+
 	;now test_num equal the number we are testing so
 	push [test_num]
 	call prime_test
@@ -1197,9 +1382,31 @@ start:
 	
 	np_screen:
 	call user_input
+	cmp [key],'r'
+	je test_loop_Start_stop3
+	cmp [key],'R'
+	je test_loop_Start_stop3
+	
+	cmp [key],'M'
+	je start_main_loop_stop3
+	cmp [key],'m'
+	je start_main_loop_stop3
+	
+	cmp [key],'e'
+	je exit
+	cmp [key],'E'
+	je exit
+	
+	jmp np_screen
 	
 	
 	
+;stop1
+	test_loop_start_stop1:
+	jmp test_loop_start_stop2
+	
+	start_main_loop_stop1:
+	jmp start_main_loop_stop2
 	
 	
 	
@@ -1237,7 +1444,7 @@ start:
 	mov [digit4],'-'
 	mov [digit5],'-'
 	
-	jmp start_main_loop_mid3
+	jmp start_main_loop_stop1
 	
 	
 	test_again:
@@ -1247,7 +1454,7 @@ start:
 	mov [digit4],'-'
 	mov [digit5],'-'
 	
-	jmp test_loop_start_mid2
+	jmp test_loop_start_stop1
 
 
 exit:

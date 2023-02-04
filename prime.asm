@@ -1250,7 +1250,7 @@ start:
 	ja test_loop_Start_stop6
 	
 	
-	mov bl,[digit1]
+	mov bl,[digit5]
 	sub bl,30h
 	cmp bl,5
 	jb test_now

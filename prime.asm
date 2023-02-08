@@ -47,7 +47,7 @@ prime_text6 db 'Press E to exit',10,10,13,'$'
 n_prime_title db 'COMPOSITE',10,10,10,13,'$'
 n_prime_text1 db 'oh.. the number:','$'
 n_prime_text2 db 'is composite(not prime)',10,10,13,'$'
-n_prime_text3 db 'these are the factors:',10,13,'$'
+n_prime_text3 db 'these are the prime factors:',10,13,'$'
 
 n_prime_text4 db 10,10,13,'$'
 n_prime_text5 db 'Press R to test again any number you want',10,13,'$'
@@ -230,8 +230,6 @@ proc test_screen
 endp test_screen
 
 
-
-
 proc prime_test ;use Fermat's Litlle Therorem to decide if a given number in range(2-2**16-1) is prime
 	;assume the number is in the stack
 	push bp
@@ -290,7 +288,6 @@ proc prime_test ;use Fermat's Litlle Therorem to decide if a given number in ran
 	PRIME:
 	mov [is_p],1
 	jmp prime1
-	
 	
 	
 	NOT_PRIME:
@@ -419,8 +416,6 @@ proc emod ;compute a**b mod p
 	jmp mod_P1
 	
 	
-	
-	
 	fin:
 	pop dx
 	pop cx
@@ -429,7 +424,6 @@ proc emod ;compute a**b mod p
 	pop bp
 	ret 6
 endp emod
-
 
 
 proc random_seed ;seed=the time(secondes)%30, if (time(secondes)%30)%4==0 then we add 1
@@ -460,6 +454,7 @@ proc random_seed ;seed=the time(secondes)%30, if (time(secondes)%30)%4==0 then w
 	pop ax
 	ret
 endp random_seed
+
 proc random  ;gets a seed and generats a random number and also changes the seed so the next time we use the function we will get something else, range=(0-255)
 			; we would probably make the first seed be the first digit of the prime we are testing or the time.
 	;assume the value of the seed is in the variable seed
@@ -482,6 +477,18 @@ proc random  ;gets a seed and generats a random number and also changes the seed
 	pop ax
 	ret
 endp random
+
+proc set_digits
+	
+	mov [digit1],'-'
+	mov [digit2],'-'
+	mov [digit3],'-'
+	mov [digit4],'-'
+	mov [digit5],'-'
+	
+	ret
+endp set_digits
+
 proc divisors_check ;find the divisors of a given number and store them in a given array with length 16 and size dw, the given array is full with zeros
 	;assume the number and the offset of the arr we want to check is in the stack [bp+4]=number [bp+6]=arr offset
 	push bp
@@ -525,7 +532,6 @@ proc divisors_check ;find the divisors of a given number and store them in a giv
 	ret 4
 endp divisors_check
 
-
 proc prime_screen
 	call start_text_mode
 	
@@ -560,7 +566,7 @@ proc prime_screen
 	
 	mov dl,[digit5]
 	int 21h
-
+	
 	
 	mov dl,' '
 	int 21h
@@ -898,6 +904,76 @@ proc not_prime_screen
 	ret
 endp not_prime_screen
 
+proc delete_next_digit
+	push ax
+	push bx
+	push cx
+	push dx
+	
+	mov cl,5
+	
+	digitL5:
+	
+	cmp cl,5
+	jne d4
+	
+	cmp [digit5],'-'
+	je search1
+	mov [digit5],'-'
+	jmp done_delete
+	
+	d4:
+	
+	cmp cl,4
+	jne d3
+	
+	cmp [digit4],'-'
+	je search1
+	mov [digit4],'-'
+	jmp done_delete
+	
+	
+	
+	d3:
+	
+	cmp cl,3
+	jne d2
+	
+	cmp [digit3],'-'
+	je search1
+	mov [digit3],'-'
+	jmp done_delete
+	
+	d2:
+	
+	cmp cl,2
+	jne d1
+	
+	cmp [digit2],'-'
+	je search1
+	mov [digit2],'-'
+	jmp done_delete
+	
+	d1:
+	cmp [digit1],'-'
+	je search1
+	mov [digit1],'-'
+	jmp done_delete
+	
+	
+	search1:
+	dec cl
+	cmp cl,0
+	jne digitL5
+	
+	done_delete:
+	pop dx
+	pop cx
+	pop bx
+	pop ax
+
+	ret
+endp delete_next_digit
 
 proc is_digit ;check if a charecter is a digit(0<=number<=9) and ax=1 if digit or 0 if not
 	;assume the charecter is in the stack
@@ -926,82 +1002,15 @@ endp prime_sound
 proc not_prime_sound
 endp not_prime_sound
 
-
-
-start:
-	mov ax,@data
-	mov ds,ax
+proc fill_next_digit
+	push bp
+	mov bp,sp
 	
-	
-	
-	
-	
-	;main loop
-	start_main_loop:
-	
-	call main_screen
-	
-	main_loop:
-	
-	
-	call user_input
-	
-	cmp [key],'e'
-	je exit_mid
-	cmp [key],'E'
-	je exit_mid
-	
-	cmp [key],'g'
-	je guide_loop_start
-	cmp [key],'G'
-	je guide_loop_start
-	
-	cmp [key],'s'
-	je test_loop_start
-	cmp [key],'S'
-	je test_loop_start
-	
-	jmp main_loop
-	start_main_loop_mid1:
-	jmp start_main_loop
-	
-;guide loop
-	guide_loop_start:
-	call guide_screen
-	
-	guide_loop:
-	
-	call user_input
-	
-	cmp [key],'r'
-	je start_main_loop
-	cmp [key],'R'
-	je start_main_loop
-	jmp guide_loop
-	
-	exit_mid:
-	jmp exit
-;stop11
-	stop11:
-	start_main_loop_stop11:
-	jmp start_main_loop
-;test loop
-	test_loop_start:
-	call test_screen
-	
-	
-	test_loop:
-	call tav_input
-	
-	xor ax,ax
-	mov al,[key]
 	push ax
+	push bx
+	push cx
+	push dx
 	
-	call is_digit
-	
-	
-	cmp ax,1
-	jne check_delete_enter
 	
 	mov al,[key]
 	mov cl,0
@@ -1024,16 +1033,6 @@ start:
 	mov [digit2],al
 	jmp rewrite
 	
-;stop10
-	stop10:
-	
-	test_loop_Start_stop10:
-	jmp test_loop_Start
-	
-	start_main_loop_stop10:
-	jmp start_main_loop_stop11
-	
-	jmp test_loop_start
 	
 	n2:
 	
@@ -1063,103 +1062,119 @@ start:
 	jmp rewrite
 	
 	
-	
-	
-	
-	jne search
-	
-	jmp rewrite
-	
 	search:
 	inc cl
 	cmp cl,5
 	jne digitL
 	
+	
 	rewrite:
-	jmp test_loop_Start_stop10
-;stop9
-	stop9:
 	
-	test_loop_Start_stop9:
-	jmp test_loop_Start_stop10
+	pop bp
+	pop dx
+	pop cx
+	pop bx
+	pop ax
+	ret
+endp fill_next_digit
 	
-	start_main_loop_stop9:
-	jmp start_main_loop_stop10
+
+
+start:
+	mov ax,@data
+	mov ds,ax
+	
+	
+	;main loop
+	start_main_loop:
+	
+	call main_screen
+	
+	main_loop:
+	
+	call user_input
+	
+	cmp [key],'e'
+	je exit_mid
+	cmp [key],'E'
+	je exit_mid
+	
+	cmp [key],'g'
+	je guide_loop_start
+	cmp [key],'G'
+	je guide_loop_start
+	
+	cmp [key],'s'
+	je test_loop_start
+	cmp [key],'S'
+	je test_loop_start
+	
+	jmp main_loop
+	
+	
+;guide loop
+	guide_loop_start:
+	
+	call guide_screen
+	
+	guide_loop:
+	
+	call user_input
+	
+	cmp [key],'r'
+	je start_main_loop
+	cmp [key],'R'
+	je start_main_loop
+	jmp guide_loop
+	
+	exit_mid:
+	jmp exit
+	
+;stop10
+	stop10:
+	
+	start_main_loop_stop10:
+	jmp start_main_loop
+;test loop
+	test_loop_start:
+	
+	call test_screen
+	
+	test_loop:
+	call tav_input
+	
+	xor ax,ax
+	mov al,[key]
+	push ax
+	
+	call is_digit
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	cmp ax,1
+	jne check_delete_enter
+	
+	call fill_next_digit
+	jmp test_loop_start ;done filling the new digit
+	
+	
+		
 		
 	check_delete_enter:
-	cmp [key],8h
+	cmp [key],8h     ;if delete was pressed
 	jne check_enter
 	
-	mov cl,5
-	
-	digitL5:
-	
-	cmp cl,5
-	jne d4
-	
-	cmp [digit5],'-'
-	je search1
-	mov [digit5],'-'
-	jmp test_loop_Start_stop9
-	
-	d4:
-	
-	cmp cl,4
-	jne d3
-	
-	cmp [digit4],'-'
-	je search1
-	mov [digit4],'-'
-	jmp test_loop_Start_stop9
-	
-	
-	
-	d3:
-	
-	cmp cl,3
-	jne d2
-	
-	cmp [digit3],'-'
-	je search1
-	mov [digit3],'-'
-	jmp test_loop_Start_stop9
-	
+	call delete_next_digit ;delete next digit
+	jmp test_loop_start_stop8
 ;stop8
 	stop8:
 	
 	test_loop_Start_stop8:
-	jmp test_loop_Start_stop9
+	jmp test_loop_Start
 	
 	start_main_loop_stop8:
-	jmp start_main_loop_stop9
+	jmp start_main_loop_stop10
 	
-	
-	d2:
-	
-	cmp cl,2
-	jne d1
-	
-	cmp [digit2],'-'
-	je search1
-	mov [digit2],'-'
-	jmp test_loop_Start_stop8
-	
-	d1:
-	cmp [digit1],'-'
-	je search1
-	mov [digit1],'-'
-	jmp test_loop_Start_stop8
-	
-	
-	search1:
-	dec cl
-	cmp cl,0
-	jne digitL5
-	
-	jmp test_loop_Start_stop8
 	
 	check_enter:
-	
 	
 	cmp [key],13
 	jne test_loop_Start_stop8
@@ -1383,23 +1398,37 @@ start:
 	np_screen:
 	call user_input
 	cmp [key],'r'
-	je test_loop_Start_stop3
+	je set
 	cmp [key],'R'
-	je test_loop_Start_stop3
+	je set
 	
 	cmp [key],'M'
-	je start_main_loop_stop3
+	je set
 	cmp [key],'m'
-	je start_main_loop_stop3
+	je set
 	
 	cmp [key],'e'
-	je exit
+	je exit1
 	cmp [key],'E'
-	je exit
+	je exit1
 	
 	jmp np_screen
 	
+	set:
+	call set_digits
 	
+	cmp [key],'r'
+	je test_loop_Start_stop2
+	cmp [key],'R'
+	je test_loop_Start_stop2
+	
+	cmp [key],'M'
+	je start_main_loop_stop2
+	cmp [key],'m'
+	je start_main_loop_stop2
+	
+	exit1:
+	jmp exit
 	
 ;stop1
 	test_loop_start_stop1:
@@ -1407,8 +1436,6 @@ start:
 	
 	start_main_loop_stop1:
 	jmp start_main_loop_stop2
-	
-	
 	
 	
 	num_is_prime:
@@ -1422,38 +1449,24 @@ start:
 	cmp [key],'R'
 	je test_again
 	
-	
 	cmp [key],'m'
 	je main_again
 	cmp [key],'M'
 	je main_again
-	
 	
 	cmp [key],'e'
 	je exit
 	cmp [key],'E'
 	je exit
 	
-	
 	jmp p_screen
 	
 	main_again:
-	mov [digit1],'-'
-	mov [digit2],'-'
-	mov [digit3],'-'
-	mov [digit4],'-'
-	mov [digit5],'-'
-	
+	call set_digits
 	jmp start_main_loop_stop1
 	
-	
 	test_again:
-	mov [digit1],'-'
-	mov [digit2],'-'
-	mov [digit3],'-'
-	mov [digit4],'-'
-	mov [digit5],'-'
-	
+	call set_digits
 	jmp test_loop_start_stop1
 
 

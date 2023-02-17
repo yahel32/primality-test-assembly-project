@@ -704,8 +704,6 @@ proc not_prime_screen
 	
 	
 	
-	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	
 	push offset Factors
 	push [test_num]
 	call divisors_check ;Factors=factors of the number we already test
@@ -1569,7 +1567,7 @@ start:
 	;now test_num equal the number we are testing so first we wanna check test_num is not 0 or 1
 	
 	cmp [test_num],1
-	ja number_is_not_01;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	ja number_is_not_01
 	
 	is_01:
 	mov [type_eror],4 

@@ -47,13 +47,22 @@ prime_text6 db 'Press E to exit',10,10,13,'$'
 n_prime_title db 'COMPOSITE',10,10,10,13,'$'
 n_prime_text1 db 'oh.. the number:','$'
 n_prime_text2 db 'is composite(not prime)',10,10,13,'$'
-n_prime_text3 db 'these are the prime factors:',10,13,'$'
+n_prime_text3 db 'these are the factors:',10,13,'$'
 
 n_prime_text4 db 10,10,13,'$'
 n_prime_text5 db 'Press R to test again any number you want',10,13,'$'
 n_prime_text6 db 'Press M to go to the main menu',10,13,'$'
 n_prime_text7 db 'Press E to exit',10,13,'$'
 
+type_eror db 0       ;0-no eror       1-eror too big              2-eror no digit       3-no number was entered  4-number is 0 or 1
+
+eror_too_big1 db '*** your number is too big.',10,13,'$'
+eror_too_big2 db 'please enter a number in the range 2-65535.',10,13,'$'
+eror_no_digit1 db '*** you need to enter only digits. not a single letter,',10,13,'$'
+eror_no_digit2 db 'or any other signs, just digits.',10,13,'$'
+eror_no_number db "*** you didn't write a number yet",10,13,'$'
+eror_number_is_01_1 db '*** your number is 0 or 1, and both of them are',10,13,'$'
+eror_number_is_01_2 db 'not defined as either prime or composite',10,13,'$'
 
 mid db 10,10,10,10,10,10,'$'
 digit1 db '-'
@@ -112,7 +121,10 @@ proc print_text   ;print text
 endp print_text
 
 proc main_screen
-call start_text_mode
+
+	mov [type_eror],0
+
+	call start_text_mode
 	
 	push offset mid
 	call print_text
@@ -142,6 +154,9 @@ endp main_screen
 
 
 proc guide_screen
+
+	mov [type_eror],0
+
 	call start_text_mode
 	
 	push offset mid
@@ -226,8 +241,84 @@ proc test_screen
 	int 21h
 	
 	
+	mov dl,10
+	int 21h
+	
+	mov dl,13
+	int 21h
+	
+	cmp [type_eror],0
+	je no_eror2
+	
+	cmp [type_eror],1
+	je too_big
+	
+	cmp [type_eror],3
+	je no_num
+	
+	cmp [type_eror],4
+	je number01_
+	
+	no_digit:
+	
+	push offset midl
+	call print_text
+	push offset eror_no_digit1
+	call print_text
+	
+	push offset midl
+	call print_text
+	push offset eror_no_digit2
+	call print_text
+	
+	no_eror2:
+	jmp no_eror
+	
+	
+	number01_:
+	jmp number01
+	
+	no_num:
+	
+	push offset midl
+	call print_text
+	push offset eror_no_number
+	call print_text
+	
+	jmp no_eror
+	
+	too_big:
+	
+	push offset midl
+	call print_text
+	push offset eror_too_big1
+	call print_text
+	
+	push offset midl
+	call print_text
+	push offset eror_too_big2
+	call print_text
+	
+	jmp no_eror
+	
+	number01:
+	
+	push offset midl
+	call print_text
+	push offset eror_number_is_01_1
+	call print_text
+	
+	push offset midl
+	call print_text
+	push offset eror_number_is_01_2
+	call print_text
+	
+	no_eror:
+	
 	ret
 endp test_screen
+
+
 
 
 proc prime_test ;use Fermat's Litlle Therorem to decide if a given number in range(2-2**16-1) is prime
@@ -288,6 +379,7 @@ proc prime_test ;use Fermat's Litlle Therorem to decide if a given number in ran
 	PRIME:
 	mov [is_p],1
 	jmp prime1
+	
 	
 	
 	NOT_PRIME:
@@ -416,6 +508,8 @@ proc emod ;compute a**b mod p
 	jmp mod_P1
 	
 	
+	
+	
 	fin:
 	pop dx
 	pop cx
@@ -424,6 +518,7 @@ proc emod ;compute a**b mod p
 	pop bp
 	ret 6
 endp emod
+
 
 
 proc random_seed ;seed=the time(secondes)%30, if (time(secondes)%30)%4==0 then we add 1
@@ -454,7 +549,6 @@ proc random_seed ;seed=the time(secondes)%30, if (time(secondes)%30)%4==0 then w
 	pop ax
 	ret
 endp random_seed
-
 proc random  ;gets a seed and generats a random number and also changes the seed so the next time we use the function we will get something else, range=(0-255)
 			; we would probably make the first seed be the first digit of the prime we are testing or the time.
 	;assume the value of the seed is in the variable seed
@@ -477,18 +571,6 @@ proc random  ;gets a seed and generats a random number and also changes the seed
 	pop ax
 	ret
 endp random
-
-proc set_digits
-	
-	mov [digit1],'-'
-	mov [digit2],'-'
-	mov [digit3],'-'
-	mov [digit4],'-'
-	mov [digit5],'-'
-	
-	ret
-endp set_digits
-
 proc divisors_check ;find the divisors of a given number and store them in a given array with length 16 and size dw, the given array is full with zeros
 	;assume the number and the offset of the arr we want to check is in the stack [bp+4]=number [bp+6]=arr offset
 	push bp
@@ -532,7 +614,11 @@ proc divisors_check ;find the divisors of a given number and store them in a giv
 	ret 4
 endp divisors_check
 
+
 proc prime_screen
+
+
+	mov [type_eror],0
 	call start_text_mode
 	
 	push offset mid
@@ -566,7 +652,7 @@ proc prime_screen
 	
 	mov dl,[digit5]
 	int 21h
-	
+
 	
 	mov dl,' '
 	int 21h
@@ -598,7 +684,8 @@ proc prime_screen
 endp prime_screen
 
 proc not_prime_screen
-	
+
+	mov [type_eror],0
 	
 	xor cl,cl
 	mov si,offset Factors
@@ -904,6 +991,69 @@ proc not_prime_screen
 	ret
 endp not_prime_screen
 
+
+proc is_digit ;check if a charecter is a digit(0<=number<=9) and ax=1 if digit or 0 if not
+	;assume the charecter is in the stack
+	push bp
+	mov bp,sp ;[bp+4]=charecter
+	;save registers
+	mov ax,[bp+4]
+	cmp ax,30h
+	jb not_digit
+	cmp ax,39h
+	ja not_digit
+	mov ax,1
+	jmp digit
+	not_digit:
+	mov ax,0
+	digit:
+	pop bp
+	ret 2
+endp is_digit
+
+proc complete_number
+	push ax
+	cmp [digit1],'-'
+	je no_num1
+	
+	
+	digit5_:
+	
+	cmp [digit5],'-'
+	jne no_num1
+	;0->digit1->digit2->digit3->digit4->digit5
+	mov ah,[digit4]
+	mov [digit5],ah
+	
+	mov ah,[digit3]
+	mov [digit4],ah
+	
+	mov ah,[digit2]
+	mov [digit3],ah
+	
+	mov ah,[digit1]
+	mov [digit2],ah
+	
+	mov [digit1],'0'
+	jmp digit5_
+	
+	no_num1:
+	pop ax
+	ret
+endp complete_number
+
+proc set_digits
+	
+	mov [digit1],'-'
+	mov [digit2],'-'
+	mov [digit3],'-'
+	mov [digit4],'-'
+	mov [digit5],'-'
+	
+	ret
+endp set_digits
+
+
 proc delete_next_digit
 	push ax
 	push bx
@@ -975,32 +1125,6 @@ proc delete_next_digit
 	ret
 endp delete_next_digit
 
-proc is_digit ;check if a charecter is a digit(0<=number<=9) and ax=1 if digit or 0 if not
-	;assume the charecter is in the stack
-	push bp
-	mov bp,sp ;[bp+4]=charecter
-	;save registers
-	mov ax,[bp+4]
-	cmp ax,30h
-	jb not_digit
-	cmp ax,39h
-	ja not_digit
-	mov ax,1
-	jmp digit
-	not_digit:
-	mov ax,0
-	digit:
-	pop bp
-	ret 2
-endp is_digit
-
-
-proc prime_sound
-endp prime_sound
-
-
-proc not_prime_sound
-endp not_prime_sound
 
 proc fill_next_digit
 	push bp
@@ -1077,12 +1201,22 @@ proc fill_next_digit
 	pop ax
 	ret
 endp fill_next_digit
-	
+
+proc prime_sound
+endp prime_sound
+
+
+proc not_prime_sound
+endp not_prime_sound
+
 
 
 start:
 	mov ax,@data
 	mov ds,ax
+	
+	
+	
 	
 	
 	;main loop
@@ -1091,6 +1225,7 @@ start:
 	call main_screen
 	
 	main_loop:
+	
 	
 	call user_input
 	
@@ -1114,7 +1249,6 @@ start:
 	
 ;guide loop
 	guide_loop_start:
-	
 	call guide_screen
 	
 	guide_loop:
@@ -1129,16 +1263,14 @@ start:
 	
 	exit_mid:
 	jmp exit
-	
-;stop10
-	stop10:
-	
-	start_main_loop_stop10:
+;stop11
+	stop11:
+	start_main_loop_stop11:
 	jmp start_main_loop
 ;test loop
 	test_loop_start:
-	
 	call test_screen
+	
 	
 	test_loop:
 	call tav_input
@@ -1148,36 +1280,61 @@ start:
 	push ax
 	
 	call is_digit
-	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	
+	
 	cmp ax,1
 	jne check_delete_enter
 	
 	call fill_next_digit
-	jmp test_loop_start ;done filling the new digit
+	jmp test_loop_Start
 	
+;stop10
+	stop10:
 	
+	test_loop_Start_stop10:
+	jmp test_loop_Start
+	
+	start_main_loop_stop10:
+	jmp start_main_loop_stop11
+	
+;stop9
+	stop9:
+	
+	test_loop_Start_stop9:
+	jmp test_loop_Start_stop10
+	
+	start_main_loop_stop9:
+	jmp start_main_loop_stop10
 		
 		
 	check_delete_enter:
-	cmp [key],8h     ;if delete was pressed
+	cmp [key],8h
 	jne check_enter
 	
-	call delete_next_digit ;delete next digit
+	call delete_next_digit
 	jmp test_loop_start_stop8
+	
 ;stop8
 	stop8:
 	
 	test_loop_Start_stop8:
-	jmp test_loop_Start
+	jmp test_loop_Start_stop9
 	
 	start_main_loop_stop8:
-	jmp start_main_loop_stop10
+	jmp start_main_loop_stop9
 	
 	
-	check_enter:
+	
+	check_enter:                        ;check if the user pressed enter
+	
 	
 	cmp [key],13
-	jne test_loop_Start_stop8
+	je check_too_big
+	
+	mov [type_eror],2                   ;eror becasue they wrote a letter
+	jmp test_loop_start_stop8
+	
+	check_too_big:
 	
 	xor cx,cx 
 	xor bx,bx
@@ -1185,9 +1342,12 @@ start:
 	mov bl,[digit1]
 	push bx
 	call is_digit
-	add cx,ax
+	cmp ax,1
+	je stop7_end
+	
+	mov [type_eror],3
+	jmp test_loop_start_stop8
 ;stop7
-	jmp stop7_end
 	stop7:
 	
 	test_loop_Start_stop7:
@@ -1198,6 +1358,7 @@ start:
 	
 	stop7_end:
 	
+	add cx,ax
 	mov bl,[digit2]
 	push bx
 	call is_digit
@@ -1219,9 +1380,11 @@ start:
 	add cx,ax
 	
 	cmp cx,5
-	jne test_loop_Start_stop7
+	je stop6_end
 	
-	jmp stop6_end
+	number_is_not_complete:
+	call complete_number
+	jmp test_now
 ;stop 6
 	stop6:
 	
@@ -1238,15 +1401,24 @@ start:
 	cmp bl,6
 	jb test_now
 	cmp bl,6
-	ja test_loop_Start_stop6
+	je keep_check
 	
+	mov [type_eror],1
+	jmp test_loop_start_Stop6
+	
+	keep_check:
 	
 	mov bl,[digit2]
 	sub bl,30h
 	cmp bl,5
 	jb test_now
 	cmp bl,5
-	ja test_loop_Start_stop6
+	je keep_check1
+	
+	mov [type_eror],1
+	jmp test_loop_start_Stop6
+	
+	keep_check1:
 	
 	
 	mov bl,[digit3]
@@ -1254,7 +1426,14 @@ start:
 	cmp bl,5
 	jb test_now
 	cmp bl,5
-	ja test_loop_Start_stop6
+	je keep_check2
+	
+	mov [type_eror],1
+	jmp test_loop_start_Stop6
+	
+	keep_check2:
+	
+	
 	
 	
 	mov bl,[digit4]
@@ -1262,16 +1441,21 @@ start:
 	cmp bl,3
 	jb test_now
 	cmp bl,3
-	ja test_loop_Start_stop6
+	je keep_check3
+	
+	mov [type_eror],1
+	jmp test_loop_start_Stop6
+	
+	keep_check3:
 	
 	
 	mov bl,[digit5]
 	sub bl,30h
 	cmp bl,5
-	jb test_now
-	cmp bl,5
-	ja test_loop_Start_stop6
-	jmp stop5_end
+	jbe test_now
+	
+	mov [type_eror],1
+	jmp test_loop_start_Stop6
 	
 ;stop5
 	stop5:
@@ -1382,7 +1566,17 @@ start:
 	
 	stop2_end:
 
-	;now test_num equal the number we are testing so
+	;now test_num equal the number we are testing so first we wanna check test_num is not 0 or 1
+	
+	cmp [test_num],1
+	ja number_is_not_01;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	
+	is_01:
+	mov [type_eror],4 
+	jmp test_loop_start_Stop2
+	
+	number_is_not_01:
+	
 	push [test_num]
 	call prime_test
 	
@@ -1430,12 +1624,15 @@ start:
 	exit1:
 	jmp exit
 	
+	
 ;stop1
 	test_loop_start_stop1:
 	jmp test_loop_start_stop2
 	
 	start_main_loop_stop1:
 	jmp start_main_loop_stop2
+	
+	
 	
 	
 	num_is_prime:
@@ -1449,24 +1646,30 @@ start:
 	cmp [key],'R'
 	je test_again
 	
+	
 	cmp [key],'m'
 	je main_again
 	cmp [key],'M'
 	je main_again
+	
 	
 	cmp [key],'e'
 	je exit
 	cmp [key],'E'
 	je exit
 	
+	
 	jmp p_screen
 	
 	main_again:
 	call set_digits
+	
 	jmp start_main_loop_stop1
+	
 	
 	test_again:
 	call set_digits
+	
 	jmp test_loop_start_stop1
 
 
